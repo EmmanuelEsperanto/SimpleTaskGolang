@@ -35,28 +35,47 @@ func PrintEnterTaskDescription() {
 
 func PrintTaskNames() {
 	fmt.Print("List of tasks: \n")
-	for _, task := range Tasks {
-		fmt.Printf("| %s: |\n--%s", task.TaskName, task.TaskDescription)
+	for i, task := range Tasks {
+		fmt.Printf("[%v]| %s: |\n	{--%s--}\n", i+1, task.TaskName, task.TaskDescription)
 	}
+}
+
+func PrintLittleTaskName() {
+	fmt.Println("Please enter name more than 3 symbols")
 }
 
 func main() {
 	input := ""
-	PrintBaseMessage()
+
 	for {
-		fmt.Scan(&input)
+
+		if len(input) == 0 {
+			PrintBaseMessage()
+			fmt.Scan(&input)
+
+		}
 		switch input {
 		case E_Create:
+			//BackToStartOfCreate:
 			PrintEnterTaskName()
 			fmt.Scan(&input)
+			if len(input) <= 3 {
+				PrintLittleTaskName()
+				input = E_Create
+				break
+				//goto BackToStartOfCreate
+			}
 			TaskName := input
 			PrintEnterTaskDescription()
 			fmt.Scan(&input)
 			CreateTask(TaskName, input)
+			input = ""
+
 		case E_Read:
 			PrintTaskNames()
+			input = ""
 		}
-		input = ""
+
 	}
 
 }
