@@ -1,12 +1,15 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
 	E_Create = "create"
 	E_Read   = "read"
 	E_Update = "update"
 	E_Delete = "delete"
+	E_Cancel = "!cancel"
 )
 
 type TaskData struct {
@@ -16,21 +19,56 @@ type TaskData struct {
 
 var Tasks = make([]TaskData, 0, 3)
 
-func PrintBaseMessage() {
-	fmt.Printf("Enter your command (%s, %s, %s, %s): \n", E_Create, E_Read, E_Update, E_Delete)
-}
-
 func CreateTask(TaskName string, TaskDescription string) {
+	if CheckTaskExists(TaskName) {
+		fmt.Print("Error creating task, reason: ")
+		PrintTaskExists()
+		return
+	}
 	Tasks = append(Tasks, TaskData{TaskName, TaskDescription})
 	fmt.Printf("Created task name is:  %s \n", TaskName)
 }
 
-func PrintEnterTaskName() {
-	fmt.Println("Enter task name")
+func CheckTaskExists(TaskName string) bool {
+	for i, _ := range Tasks {
+		if Tasks[i].TaskName == TaskName {
+			return true
+		}
+	}
+	return false
 }
 
-func PrintEnterTaskDescription() {
-	fmt.Println("Enter task description")
+func UpdateTaskName(NewTaskName, OldTaskName string) {
+	for i, _ := range Tasks {
+		if Tasks[i].TaskName == OldTaskName {
+			Tasks[i].TaskName = NewTaskName
+			fmt.Printf("New task name is:  %s \n", NewTaskName)
+			return
+		}
+	}
+	fmt.Print("Error updating task name, reason: ")
+	PrintTaskExists()
+}
+
+func DeleteTask(TaskName string) {
+	for i, task := range Tasks {
+		if task.TaskName == TaskName {
+			Tasks[i] = Tasks[len(Tasks)-1]
+			Tasks = Tasks[:len(Tasks)-1]
+		}
+	}
+}
+
+func PrintCancelMessage() {
+	fmt.Println("You can cancel operation if type: !cancel")
+}
+
+func PrintTaskNoExists() {
+	fmt.Println("Task does not exist")
+}
+
+func PrintTaskExists() {
+	fmt.Println("Task exists")
 }
 
 func PrintTaskNames() {
@@ -40,8 +78,37 @@ func PrintTaskNames() {
 	}
 }
 
+func PrintBaseMessage() {
+	fmt.Printf("Enter your command (%s, %s, %s, %s): \n", E_Create, E_Read, E_Update, E_Delete)
+}
+
+func PrintEnterTaskName() {
+	fmt.Println("Enter task name")
+	PrintCancelMessage()
+}
+
+func PrintEnterNewTaskName() {
+	fmt.Println("Enter new task name")
+	PrintCancelMessage()
+}
+
+func PrintEnterTaskDescription() {
+	fmt.Println("Enter task description")
+	PrintCancelMessage()
+}
+
 func PrintLittleTaskName() {
 	fmt.Println("Please enter name more than 3 symbols")
+}
+
+func PrintErrorMessage() {
+	fmt.Println("Error read input")
+	PrintCancelMessage()
+}
+
+func PrintSelectTaskToUpdate() {
+	fmt.Println("Please enter task name which you want to update")
+	PrintCancelMessage()
 }
 
 func main() {
@@ -51,15 +118,27 @@ func main() {
 
 		if len(input) == 0 {
 			PrintBaseMessage()
-			fmt.Scan(&input)
+			_, err := fmt.Scan(&input)
+			if err != nil {
+				PrintErrorMessage()
+				continue
+			}
 
 		}
 		switch input {
 		case E_Create:
 			//BackToStartOfCreate:
 			PrintEnterTaskName()
-			fmt.Scan(&input)
-			if len(input) <= 3 {
+			_, err1 := fmt.Scan(&input)
+			if err1 != nil {
+				PrintErrorMessage()
+				return
+			}
+			if input == E_Cancel {
+				input = ""
+				break
+			}
+			if len(input) < 3 {
 				PrintLittleTaskName()
 				input = E_Create
 				break
@@ -67,12 +146,72 @@ func main() {
 			}
 			TaskName := input
 			PrintEnterTaskDescription()
-			fmt.Scan(&input)
+			_, err2 := fmt.Scan(&input)
+			if err2 != nil {
+				PrintErrorMessage()
+				return
+			}
+			if input == E_Cancel {
+				input = ""
+				break
+			}
 			CreateTask(TaskName, input)
 			input = ""
 
 		case E_Read:
 			PrintTaskNames()
+			input = ""
+		case E_Update:
+			PrintSelectTaskToUpdate()
+			_, err1 := fmt.Scan(&input)
+			if err1 != nil {
+				PrintErrorMessage()
+				return
+			}
+			if input == E_Cancel {
+				input = ""
+				break
+			}
+			if len(input) < 3 {
+				PrintLittleTaskName()
+				input = E_Update
+				break
+			}
+			if !CheckTaskExists(input) {
+				PrintTaskNoExists()
+				input = E_Update
+				break
+			}
+			OldTaskName := input
+			PrintEnterNewTaskName()
+			_, err2 := fmt.Scan(&input)
+			if err2 != nil {
+				PrintErrorMessage()
+				return
+			}
+			if input == E_Cancel {
+				input = ""
+				break
+			}
+			if len(input) < 3 {
+				PrintLittleTaskName()
+				input = E_Update
+				break
+			}
+			if len(Tasks) > 1 && CheckTaskExists(input) {
+				PrintTaskExists()
+				input = E_Update
+				break
+			}
+			UpdateTaskName(input, OldTaskName)
+			input = ""
+		case E_Delete:
+
+		case E_Cancel:
+			input = ""
+			break
+		default:
+			PrintErrorMessage()
 			input = ""
 		}
 
