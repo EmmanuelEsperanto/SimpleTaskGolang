@@ -5,245 +5,204 @@ import (
 )
 
 const (
-	E_Create = "create"
-	E_Read   = "read"
-	E_Update = "update"
-	E_Delete = "delete"
-	E_Cancel = "!cancel"
+	Create = "create"
+	Read   = "read"
+	Update = "update"
+	Delete = "delete"
+	Cancel = "!cancel"
 )
 
 type TaskData struct {
-	TaskName        string
-	TaskDescription string
+	taskName        string
+	taskDescription string
 }
 
-var Tasks = make([]TaskData, 0, 3)
+var tasks = make([]TaskData, 0, 3)
 
-func CreateTask(TaskName string, TaskDescription string) {
-	if CheckTaskExists(TaskName) {
-		fmt.Print("Error creating task, reason: ")
-		PrintTaskExistsMessage()
+func CreateTask(taskName string, taskDescription string) {
+	if checkTaskExists(taskName) {
+		fmt.Print("Error creating task, reason: task already exists")
 		return
 	}
-	Tasks = append(Tasks, TaskData{TaskName, TaskDescription})
-	fmt.Printf("Created task name is:  %s \n", TaskName)
+	tasks = append(tasks, TaskData{taskName, taskDescription})
+	fmt.Printf("Created task name is:  %s \n", taskName)
 }
 
-func CheckTaskExists(TaskName string) bool {
-	for i, _ := range Tasks {
-		if Tasks[i].TaskName == TaskName {
+func checkTaskExists(taskName string) bool {
+	for i, _ := range tasks {
+		if tasks[i].taskName == taskName {
 			return true
 		}
 	}
 	return false
 }
 
-func UpdateTaskName(NewTaskName, OldTaskName string) {
-	for i, _ := range Tasks {
-		if Tasks[i].TaskName == OldTaskName {
-			Tasks[i].TaskName = NewTaskName
-			fmt.Printf("New task name is:  %s \n", NewTaskName)
+func UpdateTaskName(newTaskName, oldTaskName string) {
+	for i, _ := range tasks {
+		if tasks[i].taskName == oldTaskName {
+			tasks[i].taskName = newTaskName
+			fmt.Printf("New task name is:  %s \n", newTaskName)
 			return
 		}
 	}
-	fmt.Print("Error updating task name, reason: ")
-	PrintTaskExistsMessage()
+	fmt.Print("Error updating task name, reason: task does not exist")
 }
 
-func DeleteTask(TaskName string) bool {
-	for i, task := range Tasks {
-		if task.TaskName == TaskName {
-			Tasks[i] = Tasks[len(Tasks)-1]
-			Tasks = Tasks[:len(Tasks)-1]
-			PrintTaskDeletedMessage()
+func DeleteTask(taskName string) bool {
+	for i, task := range tasks {
+		if task.taskName == taskName {
+			before := tasks[:i]
+			after := tasks[i+1:]
+			tasks = append(before, after...)
+			fmt.Println("Task deleted")
 			return true
 		}
 	}
-	PrintTaskNoExistsMessage()
+	fmt.Println("Task does not exist")
 	return false
 }
 
 func PrintTaskNamesMessage() {
-	if len(Tasks) == 0 {
+	if len(tasks) == 0 {
 		fmt.Println("No tasks found")
 		return
 	}
 	fmt.Print("List of tasks: \n")
-	for i, task := range Tasks {
-		fmt.Printf("[%v]| %s: |\n	{--%s--}\n", i+1, task.TaskName, task.TaskDescription)
+	for i, task := range tasks {
+		fmt.Printf("[%v]| %s: |\n	{--%s--}\n", i+1, task.taskName, task.taskDescription)
 	}
 }
 
-func PrintTaskDeletedMessage() {
-	fmt.Println("Task deleted")
-}
-
-func PrintTaskNameDeleteMessage() {
-	fmt.Println("Enter delete task name: ")
-	PrintCancelMessage()
-}
-
-func CheckCancel(command *string) bool {
-	if *command == E_Cancel {
+func checkCancel(command *string) bool {
+	if *command == Cancel {
 		*command = ""
 		return true
 	}
 	return false
 }
 
-func PrintCancelMessage() {
+func printCancelMessage() {
 	fmt.Println("You can cancel operation if type: !cancel")
 }
 
-func PrintTaskNoExistsMessage() {
-	fmt.Println("Task does not exist")
-}
-
-func PrintTaskExistsMessage() {
-	fmt.Println("Task exists")
-}
-
-func PrintBaseMessage() {
-	fmt.Printf("Enter your command (%s, %s, %s, %s): \n", E_Create, E_Read, E_Update, E_Delete)
-}
-
-func PrintEnterTaskNameMessage() {
-	fmt.Println("Enter task name")
-	PrintCancelMessage()
-}
-
-func PrintEnterNewTaskNameMessage() {
-	fmt.Println("Enter new task name")
-	PrintCancelMessage()
-}
-
-func PrintEnterTaskDescriptionMessage() {
-	fmt.Println("Enter task description")
-	PrintCancelMessage()
-}
-
-func PrintLittleTaskNameMessage() {
-	fmt.Println("Please enter name more than 3 symbols")
-}
-
-func PrintErrorMessage() {
+func printErrorMessage() {
 	fmt.Println("Error read input")
-	PrintCancelMessage()
+	printCancelMessage()
 }
 
-func PrintSelectTaskToUpdate() {
-	fmt.Println("Please enter task name which you want to update")
-	PrintCancelMessage()
+func checkInputLen(input string) bool {
+	if len(input) < 3 {
+		fmt.Println("Please enter name more than 3 symbols")
+		return true
+	}
+	return false
 }
 
 func main() {
+	var err error
 	input := ""
-
 	for {
 		if len(input) == 0 {
-			PrintBaseMessage()
-			_, err := fmt.Scan(&input)
+			fmt.Printf("Enter your command (%s, %s, %s, %s): \n", Create, Read, Update, Delete)
+			_, err = fmt.Scan(&input)
 			if err != nil {
-				PrintErrorMessage()
+				printErrorMessage()
 				continue
 			}
-
 		}
 		switch input {
-		case E_Create:
-			PrintEnterTaskNameMessage()
-			_, err1 := fmt.Scan(&input)
-			if err1 != nil {
-				PrintErrorMessage()
+		case Create:
+			fmt.Println("Enter task name")
+			printCancelMessage()
+			_, err = fmt.Scan(&input)
+			if err != nil {
+				printErrorMessage()
 				return
 			}
-			if CheckCancel(&input) {
+			if checkCancel(&input) {
 				break
 			}
-
-			if len(input) < 3 {
-				PrintLittleTaskNameMessage()
-				input = E_Create
+			if checkInputLen(input) {
+				input = Create
 				break
 			}
-			TaskName := input
-			PrintEnterTaskDescriptionMessage()
-			_, err2 := fmt.Scan(&input)
-			if err2 != nil {
-				PrintErrorMessage()
+			taskName := input
+			fmt.Println("Enter task description")
+			printCancelMessage()
+			_, err = fmt.Scan(&input)
+			if err != nil {
+				printErrorMessage()
 				return
 			}
-			if CheckCancel(&input) {
+			if checkCancel(&input) {
 				break
 			}
-			CreateTask(TaskName, input)
+			CreateTask(taskName, input)
 			input = ""
-
-		case E_Read:
+		case Read:
 			PrintTaskNamesMessage()
 			input = ""
-		case E_Update:
-			PrintSelectTaskToUpdate()
-			_, err1 := fmt.Scan(&input)
-			if err1 != nil {
-				PrintErrorMessage()
-				return
-			}
-			if CheckCancel(&input) {
-				break
-			}
-			if len(input) < 3 {
-				PrintLittleTaskNameMessage()
-				input = E_Update
-				break
-			}
-			if !CheckTaskExists(input) {
-				PrintTaskNoExistsMessage()
-				input = E_Update
-				break
-			}
-			OldTaskName := input
-			PrintEnterNewTaskNameMessage()
-			_, err2 := fmt.Scan(&input)
-			if err2 != nil {
-				PrintErrorMessage()
-				return
-			}
-			if CheckCancel(&input) {
-				break
-			}
-			if len(input) < 3 {
-				PrintLittleTaskNameMessage()
-				input = E_Update
-				break
-			}
-			if len(Tasks) > 1 && CheckTaskExists(input) {
-				PrintTaskExistsMessage()
-				input = E_Update
-				break
-			}
-			UpdateTaskName(input, OldTaskName)
-			input = ""
-		case E_Delete:
-			PrintTaskNameDeleteMessage()
-			_, err := fmt.Scan(&input)
+		case Update:
+			fmt.Println("Please enter task name which you want to update")
+			printCancelMessage()
+			_, err = fmt.Scan(&input)
 			if err != nil {
-				PrintErrorMessage()
+				printErrorMessage()
 				return
 			}
-			if CheckCancel(&input) {
+			if checkCancel(&input) {
+				break
+			}
+			if checkInputLen(input) {
+				input = Update
+				break
+			}
+			if !checkTaskExists(input) {
+				fmt.Println("Task does not exist")
+				input = Update
+				break
+			}
+			oldTaskName := input
+			fmt.Println("Enter new task name")
+			printCancelMessage()
+			_, err = fmt.Scan(&input)
+			if err != nil {
+				printErrorMessage()
+				return
+			}
+			if checkCancel(&input) {
+				break
+			}
+			if checkInputLen(input) {
+				input = Update
+				break
+			}
+			if len(tasks) > 1 && checkTaskExists(input) {
+				fmt.Println("Can't update task name, new name already exists")
+				input = Update
+				break
+			}
+			UpdateTaskName(input, oldTaskName)
+			input = ""
+		case Delete:
+			fmt.Println("Enter delete task name: ")
+			printCancelMessage()
+			_, err = fmt.Scan(&input)
+			if err != nil {
+				printErrorMessage()
+				return
+			}
+			if checkCancel(&input) {
 				break
 			}
 			DeleteTask(input)
 			input = ""
-		case E_Cancel:
+		case Cancel:
 			input = ""
 			break
 		default:
-			PrintErrorMessage()
+			printErrorMessage()
 			input = ""
 		}
-
 	}
-
 }
