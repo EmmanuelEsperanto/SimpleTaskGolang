@@ -37,6 +37,17 @@ func checkTaskExists(taskName string) bool {
 	return false
 }
 
+func PrintTaskNamesMessage() {
+	if len(tasks) == 0 {
+		fmt.Println("No tasks found")
+		return
+	}
+	fmt.Print("List of tasks: \n")
+	for i, task := range tasks {
+		fmt.Printf("[%v]| %s: |\n	{--%s--}\n", i+1, task.taskName, task.taskDescription)
+	}
+}
+
 func UpdateTaskName(newTaskName, oldTaskName string) {
 	for i, _ := range tasks {
 		if tasks[i].taskName == oldTaskName {
@@ -62,20 +73,17 @@ func DeleteTask(taskName string) bool {
 	return false
 }
 
-func PrintTaskNamesMessage() {
-	if len(tasks) == 0 {
-		fmt.Println("No tasks found")
-		return
-	}
-	fmt.Print("List of tasks: \n")
-	for i, task := range tasks {
-		fmt.Printf("[%v]| %s: |\n	{--%s--}\n", i+1, task.taskName, task.taskDescription)
-	}
-}
-
 func checkCancel(command *string) bool {
 	if *command == Cancel {
 		*command = ""
+		return true
+	}
+	return false
+}
+
+func checkInputLen(input string) bool {
+	if len(input) < 3 {
+		fmt.Println("Please enter name more than 3 symbols")
 		return true
 	}
 	return false
@@ -88,14 +96,6 @@ func printCancelMessage() {
 func printErrorMessage() {
 	fmt.Println("Error read input")
 	printCancelMessage()
-}
-
-func checkInputLen(input string) bool {
-	if len(input) < 3 {
-		fmt.Println("Please enter name more than 3 symbols")
-		return true
-	}
-	return false
 }
 
 func main() {
